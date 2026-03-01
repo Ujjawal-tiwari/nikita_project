@@ -1,0 +1,59 @@
+=============================================================
+RBI MASTER CIRCULAR ON CREDIT RISK MANAGEMENT
+Reserve Bank of India - Department of Banking Regulation
+Circular No. RBI/2024-25/CR-01
+=============================================================
+
+SECTION 1: CREDIT RISK ASSESSMENT FRAMEWORK
+
+1.1 Banks shall have a comprehensive credit risk assessment framework that evaluates borrowers based on:
+    a) Financial standing and repayment capacity
+    b) Past credit history and track record
+    c) Quality of collateral/security offered
+    d) Industry/sector outlook
+    e) Management quality (for business borrowers)
+
+1.2 Credit Score Interpretation (CIBIL Scale 300-900):
+    - 750-900: Excellent credit. Low risk of default. Eligible for preferential interest rates.
+    - 650-749: Good credit. Moderate risk. Standard lending terms apply.
+    - 550-649: Fair credit. Elevated risk. Additional scrutiny required. Higher interest rates.
+    - 300-549: Poor credit. High risk of default. Loan approval requires enhanced due diligence.
+
+SECTION 2: DEBT-TO-INCOME (DTI) RATIO GUIDELINES
+
+2.1 The total Debt-to-Income ratio shall not exceed 50% for retail lending.
+    - DTI below 30%: Healthy financial position
+    - DTI 30-40%: Acceptable but requires monitoring
+    - DTI 40-50%: Elevated risk - additional collateral recommended
+    - DTI above 50%: High risk - loan restructuring or rejection recommended
+
+2.2 Monthly EMI-to-Income ratio should not exceed 40% of net monthly income.
+    EMI/Income ratio above 40% indicates financial stress and higher default probability.
+
+SECTION 3: COLLATERAL AND SECURITY NORMS
+
+3.1 Secured loans must maintain a minimum collateral coverage ratio of 1.25x.
+3.2 Unsecured loans above Rs. 10 lakhs require enhanced credit assessment.
+3.3 Collateral valuation must be conducted by RBI-approved valuers at least annually.
+
+SECTION 4: CREDIT CONCENTRATION LIMITS
+
+4.1 Single borrower exposure shall not exceed 15% of bank's capital funds.
+4.2 Group borrower exposure shall not exceed 40% of bank's capital funds.
+4.3 Sector-wise exposure limits as prescribed by RBI from time to time.
+
+SECTION 5: CREDIT RISK MITIGATION
+
+5.1 Banks shall use credit risk mitigation techniques including:
+    a) Eligible financial collateral (fixed deposits, government securities)
+    b) Guarantees from eligible guarantors
+    c) Credit derivatives (as permitted by RBI)
+    d) Netting arrangements
+
+5.2 Risk weights for different asset categories:
+    - Government securities: 0%
+    - AAA rated corporate bonds: 20%
+    - Housing loans (LTV <= 75%): 35%
+    - Standard retail loans: 75%
+    - Commercial real estate: 100%
+    - Non-performing assets: 150%

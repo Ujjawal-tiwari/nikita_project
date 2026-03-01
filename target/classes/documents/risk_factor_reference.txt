@@ -1,0 +1,72 @@
+=============================================================
+CREDIT RISK FACTOR REFERENCE GUIDE
+Internal Banking Reference Document
+=============================================================
+
+SECTION 1: KEY RISK FACTORS AND THEIR WEIGHTS
+
+1.1 Payment History (Weight: 35%)
+    - Most significant factor in credit scoring
+    - On-time payments improve score, missed payments reduce significantly
+    - Each missed payment can reduce score by 30-80 points
+    - Recent missed payments have greater impact than older ones
+    - Bankruptcy severely impacts score for 7-10 years
+
+1.2 Credit Utilization / Debt-to-Income Ratio (Weight: 30%)
+    - Measures total outstanding debt relative to income
+    - Ideal DTI ratio: below 30%
+    - High utilization (>50%) signals financial stress
+    - Reducing outstanding balances improves score quickly
+
+1.3 Credit History Length (Weight: 15%)
+    - Longer credit history indicates stability
+    - Minimum 3 years of credit history preferred for major loans
+    - Average age of accounts matters
+    - Closing old accounts can reduce credit history length and hurt score
+
+1.4 Credit Mix (Weight: 10%)
+    - Diverse credit portfolio (home loan + credit card + personal loan) viewed positively
+    - Over-reliance on unsecured credit (credit cards, personal loans) is negative
+    - Secured loans (home, auto) demonstrate asset-backed borrowing
+
+1.5 New Credit Inquiries (Weight: 10%)
+    - Multiple loan applications in short period reduce score
+    - Each hard inquiry reduces score by 5-10 points
+    - Rate shopping within 14-day window counted as single inquiry
+    - Soft inquiries (self-checks) do not affect score
+
+SECTION 2: RISK MITIGATION STRATEGIES FOR BORROWERS
+
+2.1 Immediate Actions (1-3 months impact):
+    - Set up automatic EMI payments to avoid missed payments
+    - Pay more than minimum due on credit cards
+    - Reduce credit card utilization below 30%
+
+2.2 Medium-term Actions (3-12 months impact):
+    - Consolidate high-interest debt into lower-interest options
+    - Build emergency fund (3-6 months expenses)
+    - Avoid applying for new credit unless necessary
+
+2.3 Long-term Actions (12+ months impact):
+    - Maintain consistent payment history
+    - Diversify credit portfolio appropriately
+    - Monitor credit report regularly for errors
+    - Build savings and investment portfolio as collateral option
+
+SECTION 3: RED FLAGS IN CREDIT ASSESSMENT
+
+3.1 High-Risk Indicators:
+    - DTI ratio above 50%
+    - More than 2 missed payments in last 12 months
+    - Credit score below 550
+    - Multiple loan applications in 30 days
+    - Active legal proceedings or SARFAESI notices
+    - Listed as willful defaulter
+
+3.2 Moderate-Risk Indicators:
+    - DTI ratio between 40-50%
+    - 1 missed payment in last 12 months
+    - Credit score between 550-650
+    - High credit card utilization
+    - Recent employment change (within 6 months)
+    - Self-employed without stable income documentation

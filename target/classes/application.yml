@@ -1,0 +1,41 @@
+# =============================================================
+# Credit Risk Explanation Service - Application Configuration
+# =============================================================
+# Uses Google Gemini FREE API via OpenAI-compatible endpoint
+# Get your free API key at: https://aistudio.google.com/apikey
+# =============================================================
+
+spring:
+  ai:
+    openai:
+      # Google Gemini API Key (FREE) - set via environment variable
+      api-key: ${GOOGLE_GEMINI_API_KEY:AIzaSyC55-crfkWfNmmW9k_FnHxxtiGYIGjp3cg}
+      # Gemini's OpenAI-compatible endpoint
+      base-url: https://generativelanguage.googleapis.com/v1beta/openai
+      chat:
+        options:
+          model: gemini-2.0-flash
+          temperature: 0.3
+      embedding:
+        options:
+          model: text-embedding-004
+
+server:
+  port: 8080
+
+# ---- Custom Credit Risk Configuration ----
+credit-risk:
+  # Spring AI Chunking configuration
+  chunking:
+    chunk-size: 800
+    chunk-overlap: 200
+    min-chunk-size: 100
+  # Vector Store / RAG configuration
+  vector-store:
+    similarity-threshold: 0.5
+    top-k: 5
+  # Error Handling & Retry configuration
+  retry:
+    max-attempts: 3
+    backoff-delay: 1000
+    backoff-multiplier: 2.0

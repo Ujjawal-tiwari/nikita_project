@@ -1,0 +1,55 @@
+=============================================================
+RBI NPA CLASSIFICATION AND PROVISIONING NORMS
+Reserve Bank of India - Master Direction on Prudential Norms
+Circular No. RBI/2024-25/NPA-03
+=============================================================
+
+SECTION 1: DEFINITION AND IDENTIFICATION OF NPA
+
+1.1 A loan or advance is classified as NPA when:
+    - Interest and/or principal installment remains overdue for more than 90 days
+    - The account remains continuously irregular as per sanctioned terms
+
+1.2 Out of Order Status (for Cash Credit/Overdraft):
+    - Outstanding balance exceeds sanctioned limit/drawing power continuously for 90 days
+    - No credits in the account for 90 days, or credits are insufficient to cover interest
+
+SECTION 2: PROVISIONING REQUIREMENTS
+
+2.1 Standard Assets Provisioning:
+    Category                          | Provision Rate
+    ---------------------------------|---------------
+    Direct Agriculture               | 0.25%
+    SME Sector                       | 0.25%
+    Commercial Real Estate (CRE)     | 1.00%
+    CRE - Residential Housing        | 0.75%
+    All Other Loans                   | 0.40%
+
+2.2 Sub-Standard Assets: 15% provision (25% for unsecured portion)
+2.3 Doubtful Assets - Secured Portion:
+    - Up to 1 year: 25%
+    - 1-3 years: 40%
+    - More than 3 years: 100%
+2.4 Doubtful Assets - Unsecured Portion: 100%
+2.5 Loss Assets: 100% (to be written off or fully provided for)
+
+SECTION 3: RESTRUCTURING OF STRESSED ASSETS
+
+3.1 Banks may restructure loans of viable borrowers as per RBI's Resolution Framework.
+3.2 Conditions for restructuring:
+    a) Borrower must demonstrate viability and ability to service restructured debt
+    b) Independent assessment of viability required for loans above Rs. 10 crore
+    c) Restructured accounts to be classified as NPA unless upgraded through regular payments
+    d) Provision on restructured standard assets: 5% (vs 0.40% for normal standard assets)
+
+3.3 Willful Defaulters:
+    - No additional facilities to be granted
+    - Name to be reported to CIBIL and RBI
+    - Penal provisions under relevant laws applicable
+    - Credit score impact: Severe (score reduced to below 400)
+
+SECTION 4: RECOVERY AND WRITE-OFF
+
+4.1 Banks must initiate recovery proceedings within 90 days of NPA classification.
+4.2 Recovery channels: SARFAESI Act, DRT, Lok Adalat, IBC proceedings.
+4.3 Write-off does not extinguish the debt; recovery efforts must continue.

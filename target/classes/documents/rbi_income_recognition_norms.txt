@@ -1,0 +1,55 @@
+=============================================================
+RBI GUIDELINES ON INCOME RECOGNITION AND ASSET CLASSIFICATION
+Reserve Bank of India - Prudential Norms (IRAC)
+Circular No. RBI/2024-25/IR-02
+=============================================================
+
+SECTION 1: INCOME RECOGNITION NORMS
+
+1.1 Income Recognition Policy:
+    a) Income on Non-Performing Assets (NPAs) shall not be recognized on accrual basis.
+    b) Interest on NPAs shall be recognized only on actual receipt (cash basis).
+    c) Income from restructured accounts shall follow specific restructuring norms.
+
+1.2 Interest Application on Loan Accounts:
+    a) Interest shall be applied at quarterly intervals on performing accounts.
+    b) For accounts classified as NPA, interest shall be reversed from profit.
+    c) Penal interest charges must be transparent and communicated to borrowers.
+
+SECTION 2: ASSET CLASSIFICATION NORMS
+
+2.1 Standard Assets:
+    - Accounts where principal and interest are current (not overdue beyond 90 days)
+    - Provision requirement: 0.40% for retail, 0.75% for commercial
+
+2.2 Sub-Standard Assets:
+    - Assets which have remained NPA for a period not exceeding 12 months
+    - Provision requirement: 15% of outstanding (25% for unsecured portion)
+
+2.3 Doubtful Assets:
+    - Assets which have remained in sub-standard category for 12 months
+    - Period up to 1 year: 25% provision
+    - Period 1-3 years: 40% provision
+    - Period more than 3 years: 100% provision
+
+2.4 Loss Assets:
+    - Assets identified as uncollectable by bank or auditors
+    - 100% provision required to be written off entirely
+
+SECTION 3: NPA CLASSIFICATION CRITERIA
+
+3.1 An asset becomes Non-Performing when:
+    a) Interest or principal payment remains overdue for more than 90 days (retail/commercial)
+    b) The account is classified as "out of order" for cash credit/overdraft facilities
+    c) The bill remains overdue for more than 90 days in bill purchase/discount accounts
+    d) Agricultural loan installment is overdue for 2 crop seasons (short) or 1 crop season (long)
+
+3.2 Special Mention Accounts (SMA) Classification:
+    - SMA-0: Principal/interest payment overdue up to 30 days
+    - SMA-1: Principal/interest payment overdue 31-60 days
+    - SMA-2: Principal/interest payment overdue 61-90 days
+
+3.3 Impact of NPA Classification on Credit Score:
+    - NPA classification significantly reduces CIBIL score (typically 50-100 point impact)
+    - Resolution/upgrade of NPA takes minimum 6 months of regular payments
+    - NPA history remains on credit report for 7 years

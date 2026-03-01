@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Credit Risk Explanation Service | AI-Powered Banking</title>
+    <meta name="description" content="AI-powered Credit Risk Explanation Service using Spring AI, RAG, LangChain, LangGraph, and MCP">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Header -->
+    <header class="header">
+        <div class="header-content">
+            <div class="logo">
+                <div class="logo-icon">🏦</div>
+                <div>
+                    <h1>Credit Risk Explanation Service</h1>
+                    <p class="subtitle">AI-Powered Risk Analysis | Spring AI • RAG • LangChain • LangGraph • MCP</p>
+                </div>
+            </div>
+            <div class="header-badge" id="statusBadge">
+                <span class="badge-dot"></span>
+                <span>System Ready</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main-content">
+        <!-- Control Panel -->
+        <section class="control-panel glass-card">
+            <h2>🔍 Analyze Customer Risk</h2>
+            <div class="controls-row">
+                <div class="input-group">
+                    <label for="customerSelect">Select Customer</label>
+                    <select id="customerSelect">
+                        <option value="CUST001">CUST001 - Rajesh Kumar (High Risk)</option>
+                        <option value="CUST002">CUST002 - Priya Sharma (Medium Risk)</option>
+                        <option value="CUST003">CUST003 - Amit Patel (Low Risk)</option>
+                        <option value="CUST004">CUST004 - Suresh Reddy (High Risk)</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label for="analysisMode">Analysis Mode</label>
+                    <select id="analysisMode">
+                        <option value="explain">Spring AI (RAG + Prompt)</option>
+                        <option value="langchain">LangChain (Sequential Chain)</option>
+                        <option value="langgraph">LangGraph (State Machine)</option>
+                        <option value="mcp">MCP (Function Calling)</option>
+                    </select>
+                </div>
+                <button class="btn-primary" id="analyzeBtn" onclick="analyzeRisk()">
+                    <span class="btn-icon">⚡</span>
+                    Analyze Risk
+                </button>
+            </div>
+            <div class="tech-tags">
+                <span class="tag tag-blue">Spring AI</span>
+                <span class="tag tag-purple">RAG</span>
+                <span class="tag tag-green">LangChain</span>
+                <span class="tag tag-orange">LangGraph</span>
+                <span class="tag tag-pink">MCP</span>
+                <span class="tag tag-teal">Embedding</span>
+                <span class="tag tag-yellow">Prompt Engineering</span>
+            </div>
+        </section>
+
+        <!-- Loading Indicator -->
+        <div class="loading-overlay" id="loadingOverlay" style="display:none;">
+            <div class="loader">
+                <div class="loader-ring"></div>
+                <p id="loadingText">Analyzing credit risk with AI...</p>
+            </div>
+        </div>
+
+        <!-- Results Grid -->
+        <div class="results-grid" id="resultsSection" style="display:none;">
+            <!-- Score Card -->
+            <section class="score-card glass-card" id="scoreCard">
+                <h3>Credit Score</h3>
+                <div class="score-gauge-container">
+                    <div class="score-gauge" id="scoreGauge">
+                        <svg viewBox="0 0 200 120" class="gauge-svg">
+                            <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="16" stroke-linecap="round"/>
+                            <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#gaugeGradient)" stroke-width="16" stroke-linecap="round" id="gaugeArc" stroke-dasharray="0 251"/>
+                            <defs>
+                                <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                                    <stop offset="0%" style="stop-color:#ef4444"/>
+                                    <stop offset="50%" style="stop-color:#f59e0b"/>
+                                    <stop offset="100%" style="stop-color:#22c55e"/>
+                                </linearGradient>
+                            </defs>
+                        </svg>
+                        <div class="score-value" id="scoreValue">---</div>
+                        <div class="score-label">out of 900</div>
+                    </div>
+                </div>
+                <div class="risk-badge" id="riskBadge">--</div>
+                <div class="score-meta" id="scoreMeta"></div>
+            </section>
+
+            <!-- Explanation Panel -->
+            <section class="explanation-panel glass-card" id="explanationPanel">
+                <h3>📋 AI Risk Explanation</h3>
+                <div class="processing-mode" id="processingMode"></div>
+                <div class="explanation-content" id="explanationContent">
+                    <p>Select a customer and click "Analyze Risk" to begin.</p>
+                </div>
+            </section>
+
+            <!-- Risk Factors -->
+            <section class="factors-panel glass-card" id="factorsPanel">
+                <h3>📊 Risk Factors</h3>
+                <div class="factors-list" id="factorsList"></div>
+            </section>
+
+            <!-- Policy Violations -->
+            <section class="policy-panel glass-card" id="policyPanel">
+                <h3>📜 RBI Policy Compliance</h3>
+                <div class="compliance-badge" id="complianceBadge"></div>
+                <div class="violations-list" id="violationsList"></div>
+            </section>
+
+            <!-- Recommendations -->
+            <section class="recommendations-panel glass-card" id="recommendationsPanel">
+                <h3>💡 Recommendations</h3>
+                <div class="recommendations-list" id="recommendationsList"></div>
+            </section>
+
+            <!-- Workflow Info (for LangChain/LangGraph modes) -->
+            <section class="workflow-panel glass-card" id="workflowPanel" style="display:none;">
+                <h3>🔗 Workflow Details</h3>
+                <div class="workflow-content" id="workflowContent"></div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p>Credit Risk Explanation Service — Built with Spring AI, RAG, LangChain, LangGraph & MCP</p>
+        <p class="footer-sub">Demonstrating AI concepts for Credit Risk Assessment in Indian Banking (RBI Guidelines)</p>
+    </footer>
+
+    <script src="app.js"></script>
+</body>
+</html>
