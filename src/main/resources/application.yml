@@ -16,9 +16,12 @@ spring:
         options:
           model: gemini-2.0-flash
           temperature: 0.3
+          max-tokens: 400
       embedding:
         options:
           model: gemini-embedding-001
+      retry:
+        max-attempts: 1
 
 server:
   port: 8080
@@ -27,9 +30,10 @@ server:
 credit-risk:
   # Spring AI Chunking configuration
   chunking:
-    chunk-size: 80
-    chunk-overlap: 20
-    min-chunk-size: 10
+    # Use larger chunks to REDUCE API requests (Free tier is 15 RPM!)
+    chunk-size: 800
+    chunk-overlap: 200
+    min-chunk-size: 100
   # Vector Store / RAG configuration
   vector-store:
     similarity-threshold: 0.5

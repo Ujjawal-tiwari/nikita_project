@@ -23,10 +23,11 @@ import java.util.stream.Collectors;
  * SPRING AI - CHUNKING, VECTOR, EMBEDDING SERVICE
  * 
  * This service demonstrates the full document ingestion pipeline:
- * 1. DOCUMENT LOADING    - Reads RBI policy documents from classpath
- * 2. CHUNKING            - Splits documents into smaller chunks using TokenTextSplitter
- * 3. EMBEDDING           - Converts text chunks to vector embeddings (via EmbeddingModel)
- * 4. VECTOR STORAGE      - Stores embeddings in SimpleVectorStore for similarity search
+ * 1. DOCUMENT LOADING - Reads RBI policy documents from classpath
+ * 2. CHUNKING - Splits documents into smaller chunks using TokenTextSplitter
+ * 3. EMBEDDING - Converts text chunks to vector embeddings (via EmbeddingModel)
+ * 4. VECTOR STORAGE - Stores embeddings in SimpleVectorStore for similarity
+ * search
  * 
  * This pipeline is essential for RAG (Retrieval Augmented Generation).
  */
@@ -98,10 +99,9 @@ public class DocumentIngestionService {
 
             // Create Spring AI Document with metadata
             Document doc = new Document(content, Map.of(
-                "source", filename,
-                "type", "RBI_POLICY",
-                "format", "text"
-            ));
+                    "source", filename,
+                    "type", "RBI_POLICY",
+                    "format", "text"));
             allDocuments.add(doc);
             log.info("  → Loaded {} characters from {}", content.length(), filename);
         }
@@ -111,11 +111,11 @@ public class DocumentIngestionService {
                 allDocuments.size(), chunkSize, chunkOverlap);
 
         TokenTextSplitter textSplitter = new TokenTextSplitter(
-            chunkSize,      // default chunk size in tokens
-            minChunkSize,   // minimum chunk size
-            minChunkSize,   // min chunk length to embed
-            100,            // max number of chunks per document
-            true            // keep separator
+                chunkSize, // default chunk size in tokens
+                minChunkSize, // minimum chunk size
+                minChunkSize, // min chunk length to embed
+                100, // max number of chunks per document
+                true // keep separator
         );
 
         List<Document> chunks = textSplitter.apply(allDocuments);
@@ -123,10 +123,31 @@ public class DocumentIngestionService {
 
         // Step 3 & 4: EMBEDDING + VECTOR STORAGE
         // The VectorStore.add() method automatically:
-        //   - Calls EmbeddingModel to convert text → vectors (EMBEDDING)
-        //   - Stores the vectors in SimpleVectorStore (VECTOR STORAGE)
+        // - Calls EmbeddingModel to convert text → vectors (EMBEDDING)
+        // - Stores the vectors in SimpleVectorStore (VECTOR STORAGE)
         log.info("🧮 EMBEDDING & STORING: Converting {} chunks to vectors and storing...", chunks.size());
-        vectorStore.add(chunks);
+
+        // To respect Gemini Free Tier rate limits (15 RPM), we process in small batches
+        // with delays
+        int batchSize = 2; // Process 2 chunks per batch
+        for (int i = 0; i < chunks.size(); i += batchSize) {
+            int end = Math.min(chunks.size(), i + batchSize);
+            List<Document> batch = chunks.subList(i, end);
+            log.info("  → Processing embedding batch {} to {} out of {}", i + 1, end, chunks.size());
+
+            try {
+                vectorStore.add(batch);
+
+                // Add a delay between batches to avoid 429 Quota Exceeded errors
+                if (end < chunks.size()) {
+                    log.debug("  → Waiting 4 seconds to respect API rate limits...");
+                    Thread.sleep(4000);
+                }
+            } catch (Exception e) {
+                log.warn("  ⚠ Failed to embed batch {} to {}: {}", i + 1, end, e.getMessage());
+                // We keep going so partial RAG knowledge is available
+            }
+        }
 
         ingested = true;
         log.info("=== ✅ Document Ingestion Complete: {} chunks embedded and stored ===", chunks.size());

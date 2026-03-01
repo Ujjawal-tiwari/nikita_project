@@ -4,9 +4,6 @@ import com.nikita.creditrisk.model.CustomerProfile;
 import com.nikita.creditrisk.model.CreditRiskScore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.retry.annotation.Backoff;
-import org.springframework.retry.annotation.Recover;
-import org.springframework.retry.annotation.Retryable;
 import org.springframework.stereotype.Service;
 
 /**
@@ -39,52 +36,65 @@ public class PromptService {
      * SPRING AI - PROMPT ENGINEERING + RAG + RESPONSE FORMATTING
      * ERROR HANDLING: @Retryable with exponential backoff
      */
-    @Retryable(value = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2.0))
     public String generateRiskExplanation(CustomerProfile customer, CreditRiskScore score) {
         log.info("🤖 PROMPT SERVICE: Generating risk explanation for {}", customer.getCustomerId());
 
-        // Step 1: RAG - Retrieve relevant policy context
-        String ragContext = ragService.retrieveCreditRiskContext(
-                score.getScore(), score.getDebtToIncomeRatio(), customer.getMissedPayments());
+        try {
+            // Step 1: RAG - Retrieve relevant policy context
+            String ragContext = ragService.retrieveCreditRiskContext(
+                    score.getScore(), score.getDebtToIncomeRatio(), customer.getMissedPayments());
 
-        // Step 2: Build prompt with all context
-        String prompt = buildExplanationPrompt(customer, score, ragContext);
-        log.info("📝 PROMPT: Built prompt with {} chars, RAG context: {} chars", prompt.length(), ragContext.length());
+            // Step 2: Build prompt with all context
+            String prompt = buildExplanationPrompt(customer, score, ragContext);
+            log.info("📝 PROMPT: Built prompt with {} chars, RAG context: {} chars", prompt.length(),
+                    ragContext.length());
 
-        // Step 3: Call AI model using RobustAiClient (handles rate limits)
-        String response = chatClient.call(prompt, "{}"); // Fallback to empty JSON object if fully failed
-        log.info("✅ AI Response received: {} chars", response != null ? response.length() : 0);
-        return response;
+            // Step 3: Call AI model using RobustAiClient (handles rate limits)
+            String response = chatClient.call(prompt, "{}"); // Fallback to empty JSON object if fully failed
+
+            // Check if response is empty JSON which means RobustAiClient triggered its
+            // fallback
+            if (response == null || "{}".equals(response.trim())) {
+                log.warn("⚠ RobustAiClient returned fallback. Using FallbackService generation.");
+                return fallbackService.generateFallbackExplanation(customer, score);
+            }
+
+            log.info("✅ AI Response received: {} chars", response.length());
+            return response;
+        } catch (Exception e) {
+            log.warn("⚠ Error in prompt generation. Using FALLBACK. Error: {}", e.getMessage());
+            return fallbackService.generateFallbackExplanation(customer, score);
+        }
     }
 
-    @Recover
-    public String generateRiskExplanationFallback(Exception e, CustomerProfile customer, CreditRiskScore score) {
-        log.warn("⚠ AI failed after retries. Using FALLBACK. Error: {}", e.getMessage());
-        return fallbackService.generateFallbackExplanation(customer, score);
-    }
-
-    @Retryable(value = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2.0))
     public String generateComplianceCheck(CustomerProfile customer, CreditRiskScore score) {
-        String ragContext = ragService.retrieveContext("RBI compliance credit risk DTI ratio NPA classification");
-        String prompt = buildCompliancePrompt(customer, score, ragContext);
-        return chatClient.call(prompt, "COMPLIANT"); // Fallback simple response
+        try {
+            String ragContext = ragService.retrieveContext("RBI compliance credit risk DTI ratio NPA classification");
+            String prompt = buildCompliancePrompt(customer, score, ragContext);
+            String response = chatClient.call(prompt, "COMPLIANT");
+
+            if (response == null || "COMPLIANT".equals(response.trim())) {
+                return fallbackService.generateFallbackCompliance(customer, score);
+            }
+            return response;
+        } catch (Exception e) {
+            return fallbackService.generateFallbackCompliance(customer, score);
+        }
     }
 
-    @Recover
-    public String generateComplianceCheckFallback(Exception e, CustomerProfile customer, CreditRiskScore score) {
-        return fallbackService.generateFallbackCompliance(customer, score);
-    }
-
-    @Retryable(value = Exception.class, maxAttempts = 3, backoff = @Backoff(delay = 1000, multiplier = 2.0))
     public String generateRecommendations(CustomerProfile customer, CreditRiskScore score) {
-        String ragContext = ragService.retrieveContext("credit score improvement risk reduction strategies");
-        String prompt = buildRecommendationsPrompt(customer, score, ragContext);
-        return chatClient.call(prompt, "[\"Maintain regular payment schedule.\"]");
-    }
+        try {
+            String ragContext = ragService.retrieveContext("credit score improvement risk reduction strategies");
+            String prompt = buildRecommendationsPrompt(customer, score, ragContext);
+            String response = chatClient.call(prompt, "[]");
 
-    @Recover
-    public String generateRecommendationsFallback(Exception e, CustomerProfile customer, CreditRiskScore score) {
-        return fallbackService.generateFallbackRecommendations(score);
+            if (response == null || "[]".equals(response.trim())) {
+                return fallbackService.generateFallbackRecommendations(score);
+            }
+            return response;
+        } catch (Exception e) {
+            return fallbackService.generateFallbackRecommendations(score);
+        }
     }
 
     // ===================== PROMPT BUILDERS =====================

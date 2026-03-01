@@ -19,9 +19,9 @@ public class RobustAiClient {
     private final ChatClient chatClient;
     private long lastCallTime = 0;
 
-    // Minimum time to wait between API calls to avoid hitting rate limits (3
+    // Minimum time to wait between API calls to avoid hitting rate limits (8
     // seconds)
-    private static final long MIN_DELAY_MS = 3000;
+    private static final long MIN_DELAY_MS = 8000;
 
     public RobustAiClient(ChatClient.Builder chatClientBuilder) {
         this.chatClient = chatClientBuilder.build();
