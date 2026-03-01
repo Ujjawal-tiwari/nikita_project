@@ -8,9 +8,9 @@ import org.springframework.stereotype.Service;
 /**
  * ROBUST AI CLIENT
  * A wrapper around Spring AI ChatClient to handle free-tier API rate limits.
- * Protects against HTTP 429 (Quota Exceeded / Too Many Requests) by introducing
- * deliberate delays between back-to-back calls and providing a fallback
- * mechanism.
+ * Now configured to use Groq (llama-3.1-8b-instant) as the primary LLM.
+ * Groq is free with 6000 requests/day and no credit card required.
+ * If Groq fails, falls back to the FallbackService (rule-based).
  */
 @Service
 public class RobustAiClient {
@@ -19,11 +19,12 @@ public class RobustAiClient {
     private final ChatClient chatClient;
     private long lastCallTime = 0;
 
-    // Minimum time to wait between API calls to avoid hitting rate limits (8
-    // seconds)
-    private static final long MIN_DELAY_MS = 8000;
+    // Groq has 30 RPM free. 2 seconds between calls keeps us well within limits.
+    private static final long MIN_DELAY_MS = 2000;
 
     public RobustAiClient(ChatClient.Builder chatClientBuilder) {
+        // ChatClient.Builder is autoconfigured with the Groq endpoint via
+        // application.yml
         this.chatClient = chatClientBuilder.build();
     }
 
@@ -34,13 +35,13 @@ public class RobustAiClient {
         enforceRateLimit();
 
         try {
-            log.info("🚀 Calling AI Model. Prompt length: {}", prompt.length());
+            log.info("🚀 Calling AI Model (Groq/llama-3.1-8b-instant). Prompt length: {}", prompt.length());
             String response = chatClient.prompt().user(prompt).call().content();
             log.info("✅ AI call successful. Response length: {}", response != null ? response.length() : 0);
             return response;
         } catch (Exception e) {
-            log.warn("⚠ AI call failed (likely 429 Rate Limit): {}", e.getMessage());
-            log.warn("🔄 Using fallback response instead.");
+            log.warn("⚠ AI call failed: {}", e.getMessage());
+            log.warn("🔄 Using hardcoded fallback response instead.");
             return fallbackResponse;
         }
     }

@@ -1,22 +1,22 @@
 # =============================================================
 # Credit Risk Explanation Service - Application Configuration
 # =============================================================
-# Uses Google Gemini FREE API via OpenAI-compatible endpoint
-# Get your free API key at: https://aistudio.google.com/apikey
+# PRIMARY: Groq FREE API (6000 req/day, no credit card!)
+# Get your free API key at: https://console.groq.com
 # =============================================================
 
 spring:
   ai:
     openai:
-      # Google Gemini API Key (FREE) - set via environment variable
-      api-key: ${GOOGLE_GEMINI_API_KEY:AIzaSyCEjuQXnyYE0Q-YBuKRzE5eMT0gIik_Q4w}
-      # Gemini's OpenAI-compatible endpoint
-      base-url: https://generativelanguage.googleapis.com/v1beta/openai
+      # Groq FREE API Key - get yours at https://console.groq.com
+      api-key: ${GROQ_API_KEY:}
+      # Groq's OpenAI-compatible endpoint
+      base-url: https://api.groq.com/openai
       chat:
         options:
-          model: gemini-2.0-flash
+          model: llama-3.1-8b-instant
           temperature: 0.3
-          max-tokens: 400
+          max-tokens: 500
       embedding:
         options:
           model: gemini-embedding-001
@@ -28,6 +28,7 @@ server:
 
 # ---- Custom Credit Risk Configuration ----
 credit-risk:
+
   # Spring AI Chunking configuration
   chunking:
     # Use larger chunks to REDUCE API requests (Free tier is 15 RPM!)
