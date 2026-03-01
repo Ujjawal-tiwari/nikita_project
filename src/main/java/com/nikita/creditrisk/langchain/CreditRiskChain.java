@@ -5,9 +5,9 @@ import com.nikita.creditrisk.model.CreditRiskScore;
 import com.nikita.creditrisk.model.RiskFactor;
 import com.nikita.creditrisk.service.CustomerDataService;
 import com.nikita.creditrisk.service.RAGService;
+import com.nikita.creditrisk.service.RobustAiClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -21,10 +21,10 @@ import java.util.function.Function;
  * 
  * This implementation demonstrates the LangChain concept using Spring AI:
  * 
- * Chain 1: SCORE ANALYSIS      → Analyzes the numeric credit score
- * Chain 2: POLICY RETRIEVAL    → Retrieves relevant RBI policies via RAG
- * Chain 3: EXPLANATION         → Generates human-readable explanation
- * Chain 4: RECOMMENDATION      → Produces risk reduction suggestions
+ * Chain 1: SCORE ANALYSIS → Analyzes the numeric credit score
+ * Chain 2: POLICY RETRIEVAL → Retrieves relevant RBI policies via RAG
+ * Chain 3: EXPLANATION → Generates human-readable explanation
+ * Chain 4: RECOMMENDATION → Produces risk reduction suggestions
  * 
  * Each chain passes its output as input to the next chain, building context.
  */
@@ -33,17 +33,17 @@ public class CreditRiskChain {
 
     private static final Logger log = LoggerFactory.getLogger(CreditRiskChain.class);
 
-    private final ChatClient chatClient;
+    private final RobustAiClient chatClient;
     private final RAGService ragService;
     private final CustomerDataService customerDataService;
 
     // Chain context - carries data through the chain
     private final Map<String, Function<Map<String, Object>, Map<String, Object>>> chainSteps = new LinkedHashMap<>();
 
-    public CreditRiskChain(ChatClient.Builder chatClientBuilder,
-                           RAGService ragService,
-                           CustomerDataService customerDataService) {
-        this.chatClient = chatClientBuilder.build();
+    public CreditRiskChain(RobustAiClient chatClient,
+            RAGService ragService,
+            CustomerDataService customerDataService) {
+        this.chatClient = chatClient;
         this.ragService = ragService;
         this.customerDataService = customerDataService;
 
@@ -119,9 +119,12 @@ public class CreditRiskChain {
 
         // Score classification logic
         String riskCategory;
-        if (score.getScore() >= 750) riskCategory = "LOW_RISK";
-        else if (score.getScore() >= 550) riskCategory = "MEDIUM_RISK";
-        else riskCategory = "HIGH_RISK";
+        if (score.getScore() >= 750)
+            riskCategory = "LOW_RISK";
+        else if (score.getScore() >= 550)
+            riskCategory = "MEDIUM_RISK";
+        else
+            riskCategory = "HIGH_RISK";
 
         context.put("customerProfile", profile);
         context.put("creditScore", score);
@@ -138,8 +141,7 @@ public class CreditRiskChain {
 
         // Use RAG to retrieve relevant policy context
         String policyContext = ragService.retrieveCreditRiskContext(
-            score.getScore(), score.getDebtToIncomeRatio(), profile.getMissedPayments()
-        );
+                score.getScore(), score.getDebtToIncomeRatio(), profile.getMissedPayments());
 
         context.put("policyContext", policyContext);
         context.put("ragRetrievalDone", true);
@@ -154,15 +156,15 @@ public class CreditRiskChain {
         String policyContext = (String) context.get("policyContext");
 
         String prompt = "Based on the following credit data and RBI policies, explain the credit risk:\n\n"
-            + "Customer: " + profile.getName() + "\n"
-            + "Score: " + score.getScore() + "/900 (" + context.get("riskCategory") + ")\n"
-            + "DTI Ratio: " + score.getDebtToIncomeRatio() + "%\n"
-            + "Missed Payments: " + profile.getMissedPayments() + "\n\n"
-            + "Relevant RBI Policies:\n" + policyContext + "\n\n"
-            + "Provide a clear explanation of WHY this score is what it is, "
-            + "citing specific RBI policies. Keep it concise (3-4 paragraphs).";
+                + "Customer: " + profile.getName() + "\n"
+                + "Score: " + score.getScore() + "/900 (" + context.get("riskCategory") + ")\n"
+                + "DTI Ratio: " + score.getDebtToIncomeRatio() + "%\n"
+                + "Missed Payments: " + profile.getMissedPayments() + "\n\n"
+                + "Relevant RBI Policies:\n" + policyContext + "\n\n"
+                + "Provide a clear explanation of WHY this score is what it is, "
+                + "citing specific RBI policies. Keep it concise (3-4 paragraphs).";
 
-        String explanation = chatClient.prompt().user(prompt).call().content();
+        String explanation = chatClient.call(prompt, "Credit risk explanation unavailable due to AI limits.");
         context.put("explanation", explanation);
 
         return context;
@@ -175,13 +177,13 @@ public class CreditRiskChain {
         CustomerProfile profile = (CustomerProfile) context.get("customerProfile");
 
         String prompt = "Based on this credit risk analysis:\n\n"
-            + explanation + "\n\n"
-            + "Risk Level: " + riskCategory + "\n"
-            + "Customer Employment: " + profile.getEmploymentType() + "\n\n"
-            + "Provide 3-5 specific, actionable recommendations for the customer "
-            + "to improve their credit score. Be practical and reference RBI guidelines where applicable.";
+                + explanation + "\n\n"
+                + "Risk Level: " + riskCategory + "\n"
+                + "Customer Employment: " + profile.getEmploymentType() + "\n\n"
+                + "Provide 3-5 specific, actionable recommendations for the customer "
+                + "to improve their credit score. Be practical and reference RBI guidelines where applicable.";
 
-        String recommendations = chatClient.prompt().user(prompt).call().content();
+        String recommendations = chatClient.call(prompt, "1. Ensure timely payments.\n2. Reduce Debt-to-Income ratio.");
         context.put("recommendations", recommendations);
 
         return context;

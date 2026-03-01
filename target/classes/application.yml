@@ -9,7 +9,7 @@ spring:
   ai:
     openai:
       # Google Gemini API Key (FREE) - set via environment variable
-      api-key: ${GOOGLE_GEMINI_API_KEY:AIzaSyC55-crfkWfNmmW9k_FnHxxtiGYIGjp3cg}
+      api-key: ${GOOGLE_GEMINI_API_KEY:}
       # Gemini's OpenAI-compatible endpoint
       base-url: https://generativelanguage.googleapis.com/v1beta/openai
       chat:
@@ -18,7 +18,7 @@ spring:
           temperature: 0.3
       embedding:
         options:
-          model: text-embedding-004
+          model: gemini-embedding-001
 
 server:
   port: 8080
@@ -27,13 +27,13 @@ server:
 credit-risk:
   # Spring AI Chunking configuration
   chunking:
-    chunk-size: 800
-    chunk-overlap: 200
-    min-chunk-size: 100
+    chunk-size: 80
+    chunk-overlap: 20
+    min-chunk-size: 10
   # Vector Store / RAG configuration
   vector-store:
     similarity-threshold: 0.5
-    top-k: 5
+    top-k: 2
   # Error Handling & Retry configuration
   retry:
     max-attempts: 3

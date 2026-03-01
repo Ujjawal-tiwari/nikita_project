@@ -16,13 +16,7 @@ import java.util.*;
 
 /**
  * MAIN ORCHESTRATION SERVICE
- * 
- * Coordinates all components:
- * - Spring AI (Prompt, RAG, Embedding, Vector)
- * - LangChain (Sequential Chain)
- * - LangGraph (State Graph)
- * - MCP (Function Calling)
- * - Error Handling & Fallback
+ * Coordinates Spring AI, LangChain, LangGraph, MCP, and Fallback.
  */
 @Service
 public class CreditRiskService {
@@ -38,11 +32,11 @@ public class CreditRiskService {
     private final ObjectMapper objectMapper;
 
     public CreditRiskService(CustomerDataService customerDataService,
-                              PromptService promptService,
-                              FallbackService fallbackService,
-                              CreditRiskChain creditRiskChain,
-                              RiskAssessmentGraph riskAssessmentGraph,
-                              ChatClient.Builder chatClientBuilder) {
+            PromptService promptService,
+            FallbackService fallbackService,
+            CreditRiskChain creditRiskChain,
+            RiskAssessmentGraph riskAssessmentGraph,
+            ChatClient.Builder chatClientBuilder) {
         this.customerDataService = customerDataService;
         this.promptService = promptService;
         this.fallbackService = fallbackService;
@@ -52,55 +46,37 @@ public class CreditRiskService {
         this.objectMapper = new ObjectMapper();
     }
 
-    /**
-     * Main endpoint: Generate full credit risk explanation.
-     * Uses Spring AI RAG + Prompt Engineering + Response Formatting.
-     */
     public RiskExplanationResponse explainRisk(String customerId) {
         log.info("==== Starting Credit Risk Explanation for {} ====", customerId);
 
         CustomerProfile customer = customerDataService.getCustomerProfile(customerId);
         CreditRiskScore score = customerDataService.getCreditScore(customerId);
-
         if (customer == null || score == null) {
             throw new IllegalArgumentException("Customer not found: " + customerId);
         }
 
         try {
-            // Use Spring AI (RAG + Prompt + Response Formatting)
             String aiResponse = promptService.generateRiskExplanation(customer, score);
+            log.info("🤖 Raw AI response (first 500 chars): {}",
+                    aiResponse != null ? aiResponse.substring(0, Math.min(500, aiResponse.length())) : "NULL");
             RiskExplanationResponse response = parseAIResponse(aiResponse, customerId, score);
             response.setProcessingMode("AI");
             response.setTimestamp(LocalDateTime.now().toString());
             return response;
         } catch (Exception e) {
-            log.warn("AI explanation failed, using fallback: {}", e.getMessage());
-            String fallbackJson = fallbackService.generateFallbackExplanation(customer, score);
-            RiskExplanationResponse response = parseAIResponse(fallbackJson, customerId, score);
-            response.setProcessingMode("FALLBACK");
-            response.setTimestamp(LocalDateTime.now().toString());
-            return response;
+            log.warn("⚠ AI explanation failed, using fallback: {}", e.getMessage());
+            return buildFallbackResponse(customer, score, customerId);
         }
     }
 
-    /**
-     * LangChain endpoint: Execute sequential chain analysis.
-     */
     public Map<String, Object> explainWithLangChain(String customerId) {
         validateCustomer(customerId);
-        log.info("==== LangChain Analysis for {} ====", customerId);
         return creditRiskChain.executeChain(customerId);
     }
 
-    /**
-     * LangGraph endpoint: Execute state graph workflow.
-     */
     public Map<String, Object> explainWithLangGraph(String customerId) {
         validateCustomer(customerId);
-        log.info("==== LangGraph Analysis for {} ====", customerId);
-
         GraphState state = riskAssessmentGraph.execute(customerId);
-
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("customerId", state.getCustomerId());
         result.put("riskLevel", state.getRiskLevel());
@@ -115,92 +91,144 @@ public class CreditRiskService {
         return result;
     }
 
-    /**
-     * MCP endpoint: Use function calling to let AI query tools.
-     */
     public String explainWithMCP(String customerId) {
         validateCustomer(customerId);
-        log.info("==== MCP Function Calling Analysis for {} ====", customerId);
-
         try {
-            String response = chatClient.prompt()
-                .user("Analyze the credit risk for customer " + customerId + ". "
-                    + "First look up their credit score, then get their full profile, "
-                    + "then analyze their risk factors, and finally search for relevant "
-                    + "RBI policies. Provide a comprehensive risk assessment report.")
-                .functions("lookupCreditScore", "getCustomerProfile",
-                          "analyzeRiskFactors", "searchRBIPolicies")
-                .call()
-                .content();
-
-            return response;
+            return chatClient.prompt()
+                    .user("Analyze credit risk for customer " + customerId + ". "
+                            + "Look up their credit score, get their profile, analyze risk factors, "
+                            + "and search for relevant RBI policies. Provide a comprehensive report.")
+                    .functions("lookupCreditScore", "getCustomerProfile",
+                            "analyzeRiskFactors", "searchRBIPolicies")
+                    .call().content();
         } catch (Exception e) {
-            log.warn("MCP analysis failed: {}", e.getMessage());
-            CreditRiskScore score = customerDataService.getCreditScore(customerId);
-            CustomerProfile customer = customerDataService.getCustomerProfile(customerId);
-            return fallbackService.generateFallbackExplanation(customer, score);
+            log.warn("MCP failed: {}", e.getMessage());
+            CustomerProfile c = customerDataService.getCustomerProfile(customerId);
+            CreditRiskScore s = customerDataService.getCreditScore(customerId);
+            return fallbackService.generateFallbackExplanation(c, s);
         }
     }
 
-    /**
-     * Get compliance check result.
-     */
     public String getComplianceCheck(String customerId) {
-        CustomerProfile customer = customerDataService.getCustomerProfile(customerId);
-        CreditRiskScore score = customerDataService.getCreditScore(customerId);
         validateCustomer(customerId);
-        return promptService.generateComplianceCheck(customer, score);
+        CustomerProfile c = customerDataService.getCustomerProfile(customerId);
+        CreditRiskScore s = customerDataService.getCreditScore(customerId);
+        return promptService.generateComplianceCheck(c, s);
     }
 
-    /**
-     * Get recommendations.
-     */
     public String getRecommendations(String customerId) {
-        CustomerProfile customer = customerDataService.getCustomerProfile(customerId);
-        CreditRiskScore score = customerDataService.getCreditScore(customerId);
         validateCustomer(customerId);
-        return promptService.generateRecommendations(customer, score);
+        CustomerProfile c = customerDataService.getCustomerProfile(customerId);
+        CreditRiskScore s = customerDataService.getCreditScore(customerId);
+        return promptService.generateRecommendations(c, s);
     }
 
     private void validateCustomer(String customerId) {
         if (customerDataService.getCustomerProfile(customerId) == null) {
-            throw new IllegalArgumentException("Customer not found: " + customerId
-                + ". Valid IDs: " + customerDataService.getAllCustomerIds());
+            throw new IllegalArgumentException("Customer not found: " + customerId);
         }
     }
 
     /**
-     * SPRING AI - RESPONSE FORMATTING
-     * Parses the AI JSON response into structured RiskExplanationResponse.
+     * Builds a detailed fallback response when AI is unavailable.
      */
-    private RiskExplanationResponse parseAIResponse(String jsonResponse, String customerId, CreditRiskScore score) {
+    private RiskExplanationResponse buildFallbackResponse(CustomerProfile c, CreditRiskScore s, String customerId) {
+        RiskExplanationResponse r = new RiskExplanationResponse();
+        r.setCustomerId(customerId);
+        r.setCreditScore(s.getScore());
+        r.setRiskLevel(s.getRiskLevel());
+        r.setProcessingMode("FALLBACK");
+        r.setTimestamp(LocalDateTime.now().toString());
+        r.setScoreInterpretation(
+                "Credit score of " + s.getScore() + "/900 indicates " + s.getRiskLevel() + " risk level. " +
+                        "DTI ratio is " + String.format("%.1f", s.getDebtToIncomeRatio()) + "%, EMI-to-income is " +
+                        String.format("%.1f", s.getEmiToIncomeRatio()) + "%.");
+        r.setComplianceStatus(s.getDebtToIncomeRatio() > 50 ? "NON_COMPLIANT"
+                : c.getMissedPayments() > 2 ? "PARTIALLY_COMPLIANT" : "COMPLIANT");
+        r.setSummary("This assessment uses rule-based analysis. The customer has a " + s.getRiskLevel() +
+                " risk profile with " + c.getMissedPayments() + " missed payments and a DTI of " +
+                String.format("%.1f", s.getDebtToIncomeRatio()) + "%.");
+
+        List<RiskExplanationResponse.RiskFactorDetail> factors = new ArrayList<>();
+        if (s.getDebtToIncomeRatio() > 50)
+            factors.add(new RiskExplanationResponse.RiskFactorDetail(
+                    "High Debt-to-Income Ratio", "HIGH", "DTI of " + String.format("%.1f", s.getDebtToIncomeRatio())
+                            + "% exceeds RBI recommended limit of 50%."));
+        if (c.getMissedPayments() > 0)
+            factors.add(new RiskExplanationResponse.RiskFactorDetail(
+                    "Payment Defaults", c.getMissedPayments() > 3 ? "HIGH" : "MEDIUM",
+                    c.getMissedPayments() + " missed payments affect creditworthiness."));
+        if (s.getEmiToIncomeRatio() > 40)
+            factors.add(new RiskExplanationResponse.RiskFactorDetail(
+                    "High EMI Burden", "HIGH",
+                    "EMI-to-income ratio of " + String.format("%.1f", s.getEmiToIncomeRatio()) + "% is above 40%."));
+        if (c.getCreditHistoryYears() < 3)
+            factors.add(new RiskExplanationResponse.RiskFactorDetail(
+                    "Short Credit History", "MEDIUM",
+                    "Only " + c.getCreditHistoryYears() + " years of credit history."));
+        r.setKeyFactors(factors);
+
+        List<RiskExplanationResponse.PolicyViolation> violations = new ArrayList<>();
+        if (s.getDebtToIncomeRatio() > 50)
+            violations.add(new RiskExplanationResponse.PolicyViolation(
+                    "RBI DTI Guidelines", "FOIR Norms", "DTI exceeds 50% threshold", "HIGH"));
+        if (c.getMissedPayments() >= 3)
+            violations.add(new RiskExplanationResponse.PolicyViolation(
+                    "RBI NPA Classification", "DOR.STR.REC.12", "Multiple payment defaults detected", "HIGH"));
+        r.setPolicyViolations(violations);
+
+        r.setRecommendations(List.of(
+                "Reduce total debt to bring DTI below 50%",
+                "Clear missed payments and maintain regular payment schedule",
+                "Consider debt consolidation for better EMI management",
+                "Build longer credit history with small secured loans"));
+        return r;
+    }
+
+    /**
+     * SPRING AI - RESPONSE FORMATTING
+     * Parses AI JSON response into structured RiskExplanationResponse.
+     */
+    private RiskExplanationResponse parseAIResponse(String aiResponse, String customerId, CreditRiskScore score) {
         RiskExplanationResponse response = new RiskExplanationResponse();
         response.setCustomerId(customerId);
         response.setCreditScore(score.getScore());
 
+        if (aiResponse == null || aiResponse.isBlank()) {
+            log.warn("AI returned empty response, using fallback");
+            CustomerProfile c = customerDataService.getCustomerProfile(customerId);
+            return buildFallbackResponse(c, score, customerId);
+        }
+
         try {
-            // Clean JSON (remove markdown code blocks if present)
-            String cleaned = jsonResponse.trim();
+            // Clean JSON - remove markdown code blocks if present
+            String cleaned = aiResponse.trim();
             if (cleaned.startsWith("```")) {
-                cleaned = cleaned.replaceAll("^```json?\\s*", "").replaceAll("\\s*```$", "");
+                cleaned = cleaned.replaceAll("^```json?\\s*\n?", "").replaceAll("\n?\\s*```$", "");
+            }
+
+            // Try to find JSON in the response
+            int jsonStart = cleaned.indexOf('{');
+            int jsonEnd = cleaned.lastIndexOf('}');
+            if (jsonStart >= 0 && jsonEnd > jsonStart) {
+                cleaned = cleaned.substring(jsonStart, jsonEnd + 1);
             }
 
             JsonNode root = objectMapper.readTree(cleaned);
 
-            response.setScoreInterpretation(getTextOrDefault(root, "scoreInterpretation", "Score: " + score.getScore()));
-            response.setRiskLevel(getTextOrDefault(root, "riskLevel", score.getRiskLevel()));
-            response.setComplianceStatus(getTextOrDefault(root, "complianceStatus", "UNKNOWN"));
-            response.setSummary(getTextOrDefault(root, "summary", "Analysis completed for " + customerId));
+            response.setScoreInterpretation(getText(root, "scoreInterpretation", "Score: " + score.getScore()));
+            response.setRiskLevel(getText(root, "riskLevel", score.getRiskLevel()));
+            response.setComplianceStatus(getText(root, "complianceStatus", "UNKNOWN"));
+            response.setSummary(getText(root, "summary", "AI analysis completed."));
 
             // Parse key factors
             List<RiskExplanationResponse.RiskFactorDetail> factors = new ArrayList<>();
             if (root.has("keyFactors") && root.get("keyFactors").isArray()) {
                 for (JsonNode f : root.get("keyFactors")) {
                     factors.add(new RiskExplanationResponse.RiskFactorDetail(
-                        getTextOrDefault(f, "factor", "Unknown"),
-                        getTextOrDefault(f, "impact", "MEDIUM"),
-                        getTextOrDefault(f, "description", "")
-                    ));
+                            getText(f, "factor", "Unknown"),
+                            getText(f, "impact", "MEDIUM"),
+                            getText(f, "description", "")));
                 }
             }
             response.setKeyFactors(factors);
@@ -210,11 +238,10 @@ public class CreditRiskService {
             if (root.has("policyViolations") && root.get("policyViolations").isArray()) {
                 for (JsonNode v : root.get("policyViolations")) {
                     violations.add(new RiskExplanationResponse.PolicyViolation(
-                        getTextOrDefault(v, "policyName", "Unknown"),
-                        getTextOrDefault(v, "section", ""),
-                        getTextOrDefault(v, "violation", ""),
-                        getTextOrDefault(v, "severity", "MEDIUM")
-                    ));
+                            getText(v, "policyName", "Unknown"),
+                            getText(v, "section", ""),
+                            getText(v, "violation", ""),
+                            getText(v, "severity", "MEDIUM")));
                 }
             }
             response.setPolicyViolations(violations);
@@ -228,19 +255,24 @@ public class CreditRiskService {
             }
             response.setRecommendations(recs);
 
+            log.info("✅ Parsed AI response: {} factors, {} violations, {} recommendations",
+                    factors.size(), violations.size(), recs.size());
+
         } catch (Exception e) {
-            log.warn("Failed to parse AI response as JSON, using raw text: {}", e.getMessage());
+            log.warn("⚠ JSON parse failed: {}. Using raw AI text as summary.", e.getMessage());
             response.setRiskLevel(score.getRiskLevel());
-            response.setSummary(jsonResponse.length() > 500 ? jsonResponse.substring(0, 500) : jsonResponse);
+            response.setSummary(aiResponse.length() > 1000 ? aiResponse.substring(0, 1000) : aiResponse);
+            response.setScoreInterpretation("AI analysis for score " + score.getScore() + "/900");
+            response.setComplianceStatus(score.getDebtToIncomeRatio() > 50 ? "NON_COMPLIANT" : "PARTIALLY_COMPLIANT");
             response.setKeyFactors(Collections.emptyList());
             response.setPolicyViolations(Collections.emptyList());
-            response.setRecommendations(Collections.singletonList("Please contact your relationship manager for details."));
+            response.setRecommendations(List.of("Please review the detailed analysis in the summary above."));
         }
 
         return response;
     }
 
-    private String getTextOrDefault(JsonNode node, String field, String defaultVal) {
-        return node.has(field) && !node.get(field).isNull() ? node.get(field).asText() : defaultVal;
+    private String getText(JsonNode node, String field, String def) {
+        return node.has(field) && !node.get(field).isNull() ? node.get(field).asText() : def;
     }
 }

@@ -5,9 +5,9 @@ import com.nikita.creditrisk.model.CustomerProfile;
 import com.nikita.creditrisk.model.RiskFactor;
 import com.nikita.creditrisk.service.CustomerDataService;
 import com.nikita.creditrisk.service.RAGService;
+import com.nikita.creditrisk.service.RobustAiClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.ai.chat.client.ChatClient;
 import org.springframework.stereotype.Service;
 
 import java.util.*;
@@ -21,22 +21,22 @@ import java.util.function.Function;
  * 
  * This implementation creates a workflow graph:
  * 
- *   [START]
- *      ↓
- *   [Score Classifier] → classifies risk level
- *      ↓
- *   [Conditional Router] → routes based on risk level
- *      ↓                    ↓                    ↓
- *   HIGH RISK           MEDIUM RISK           LOW RISK
- *   [Deep Audit]        [Standard Check]      [Quick Review]
- *      ↓                    ↓                    ↓
- *   [Policy Checker] ← ← ← ← ← ← ← ← ← ← ← ←
- *      ↓
- *   [Explanation Generator]
- *      ↓
- *   [Recommendation Engine]
- *      ↓
- *   [END]
+ * [START]
+ * ↓
+ * [Score Classifier] → classifies risk level
+ * ↓
+ * [Conditional Router] → routes based on risk level
+ * ↓ ↓ ↓
+ * HIGH RISK MEDIUM RISK LOW RISK
+ * [Deep Audit] [Standard Check] [Quick Review]
+ * ↓ ↓ ↓
+ * [Policy Checker] ← ← ← ← ← ← ← ← ← ← ← ←
+ * ↓
+ * [Explanation Generator]
+ * ↓
+ * [Recommendation Engine]
+ * ↓
+ * [END]
  */
 @Service
 public class RiskAssessmentGraph {
@@ -45,7 +45,7 @@ public class RiskAssessmentGraph {
 
     private final CustomerDataService customerDataService;
     private final RAGService ragService;
-    private final ChatClient chatClient;
+    private final RobustAiClient chatClient;
 
     // Graph structure: nodes and edges
     private final Map<String, GraphNode> nodes = new LinkedHashMap<>();
@@ -56,11 +56,11 @@ public class RiskAssessmentGraph {
     private static final String END = "END";
 
     public RiskAssessmentGraph(CustomerDataService customerDataService,
-                                RAGService ragService,
-                                ChatClient.Builder chatClientBuilder) {
+            RAGService ragService,
+            RobustAiClient chatClient) {
         this.customerDataService = customerDataService;
         this.ragService = ragService;
-        this.chatClient = chatClientBuilder.build();
+        this.chatClient = chatClient;
 
         // Build the graph
         buildGraph();
@@ -84,10 +84,14 @@ public class RiskAssessmentGraph {
             String riskLevel = state.getRiskLevel();
             log.info("  🔀 CONDITIONAL ROUTING: Risk level = {} ", riskLevel);
             switch (riskLevel) {
-                case "HIGH": return "deepAudit";
-                case "MEDIUM": return "standardCheck";
-                case "LOW": return "quickReview";
-                default: return "standardCheck";
+                case "HIGH":
+                    return "deepAudit";
+                case "MEDIUM":
+                    return "standardCheck";
+                case "LOW":
+                    return "quickReview";
+                default:
+                    return "standardCheck";
             }
         });
     }
@@ -116,7 +120,8 @@ public class RiskAssessmentGraph {
             executeNode(nextNode, state);
         }
 
-        // Continue with fixed path: policyChecker → explanationGenerator → recommendationEngine
+        // Continue with fixed path: policyChecker → explanationGenerator →
+        // recommendationEngine
         String[] remainingNodes = { "policyChecker", "explanationGenerator", "recommendationEngine" };
         for (String nodeName : remainingNodes) {
             executionPath.add(nodeName);
@@ -210,8 +215,7 @@ public class RiskAssessmentGraph {
         CustomerProfile profile = state.getCustomerProfile();
 
         String context = ragService.retrieveCreditRiskContext(
-            score.getScore(), score.getDebtToIncomeRatio(), profile.getMissedPayments()
-        );
+                score.getScore(), score.getDebtToIncomeRatio(), profile.getMissedPayments());
         state.setPolicyContext(context);
 
         // Determine compliance
@@ -234,15 +238,15 @@ public class RiskAssessmentGraph {
         CreditRiskScore s = state.getCreditRiskScore();
 
         String prompt = "You are a credit risk analyst. Explain this assessment:\n\n"
-            + "Customer: " + p.getName() + " (Score: " + s.getScore() + "/900, "
-            + state.getRiskLevel() + " RISK)\n"
-            + "DTI: " + s.getDebtToIncomeRatio() + "%, Missed Payments: " + p.getMissedPayments() + "\n"
-            + "Audit Type: " + state.getMetadata().get("auditType") + "\n\n"
-            + "RBI Policy Context:\n" + state.getPolicyContext() + "\n\n"
-            + "Provide a clear, professional explanation (3-4 paragraphs) covering score meaning, "
-            + "key risk factors, policy compliance, and overall assessment.";
+                + "Customer: " + p.getName() + " (Score: " + s.getScore() + "/900, "
+                + state.getRiskLevel() + " RISK)\n"
+                + "DTI: " + s.getDebtToIncomeRatio() + "%, Missed Payments: " + p.getMissedPayments() + "\n"
+                + "Audit Type: " + state.getMetadata().get("auditType") + "\n\n"
+                + "RBI Policy Context:\n" + state.getPolicyContext() + "\n\n"
+                + "Provide a clear, professional explanation (3-4 paragraphs) covering score meaning, "
+                + "key risk factors, policy compliance, and overall assessment.";
 
-        String explanation = chatClient.prompt().user(prompt).call().content();
+        String explanation = chatClient.call(prompt, "Credit assessment unavailable due to AI limits.");
         state.setExplanation(explanation);
         return state;
     }
@@ -252,14 +256,15 @@ public class RiskAssessmentGraph {
      */
     private GraphState recommendationEngineNode(GraphState state) {
         String prompt = "Based on this credit risk assessment:\n\n"
-            + "Risk Level: " + state.getRiskLevel() + "\n"
-            + "Score: " + state.getCreditRiskScore().getScore() + "/900\n"
-            + "Compliance: " + state.getComplianceStatus() + "\n\n"
-            + state.getExplanation() + "\n\n"
-            + "Provide 3-5 specific, prioritized recommendations to improve the credit score. "
-            + "Format each as a numbered list with expected timeline and impact.";
+                + "Risk Level: " + state.getRiskLevel() + "\n"
+                + "Score: " + state.getCreditRiskScore().getScore() + "/900\n"
+                + "Compliance: " + state.getComplianceStatus() + "\n\n"
+                + state.getExplanation() + "\n\n"
+                + "Provide 3-5 specific, prioritized recommendations to improve the credit score. "
+                + "Format each as a numbered list with expected timeline and impact.";
 
-        String recommendations = chatClient.prompt().user(prompt).call().content();
+        String recommendations = chatClient.call(prompt,
+                "1. Maintain regular payments.\n2. Do not incur more excessive debt.");
         state.setRecommendations(recommendations);
         return state;
     }
