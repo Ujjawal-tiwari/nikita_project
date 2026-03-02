@@ -1,15 +1,20 @@
 # =============================================================
 # Credit Risk Explanation Service - Application Configuration
 # =============================================================
-# PRIMARY: Groq FREE API (6000 req/day, no credit card!)
-# Get your free API key at: https://console.groq.com
+# CHAT:       Groq FREE API (llama-3.1-8b-instant) - 6000 req/day
+# EMBEDDINGS: Nomic AI FREE API (nomic-embed-text-v1.5) - 768-dim
+# VECTOR DB:  SimpleVectorStore saved to ./data/credit-risk-vectors.json
+#
+# SECRETS: Set these as environment variables, NEVER hardcode them!
+#   set GROQ_API_KEY=gsk_...
+#   set NOMIC_API_KEY=nk-...
 # =============================================================
 
 spring:
   ai:
     openai:
       # Groq FREE API Key - get yours at https://console.groq.com
-      api-key: ${GROQ_API_KEY:}
+      api-key: ${GROQ_API_KEY}
       # Groq's OpenAI-compatible endpoint
       base-url: https://api.groq.com/openai
       chat:
@@ -17,11 +22,14 @@ spring:
           model: llama-3.1-8b-instant
           temperature: 0.3
           max-tokens: 500
-      embedding:
-        options:
-          model: gemini-embedding-001
       retry:
         max-attempts: 1
+
+# ---- Nomic AI - Free Embeddings (768 dimensions) ----
+# Sign up free at https://atlas.nomic.ai
+nomic:
+  ai:
+    api-key: ${NOMIC_API_KEY}
 
 server:
   port: 8080
@@ -31,7 +39,6 @@ credit-risk:
 
   # Spring AI Chunking configuration
   chunking:
-    # Use larger chunks to REDUCE API requests (Free tier is 15 RPM!)
     chunk-size: 800
     chunk-overlap: 200
     min-chunk-size: 100
@@ -39,6 +46,7 @@ credit-risk:
   vector-store:
     similarity-threshold: 0.5
     top-k: 2
+    file-path: ./data/credit-risk-vectors.json
   # Error Handling & Retry configuration
   retry:
     max-attempts: 3

@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.support.PathMatchingResourcePatternResolver;
 import org.springframework.stereotype.Service;
+import com.nikita.creditrisk.config.VectorStoreConfig;
 
 import jakarta.annotation.PostConstruct;
 import java.io.BufferedReader;
@@ -37,6 +38,7 @@ public class DocumentIngestionService {
     private static final Logger log = LoggerFactory.getLogger(DocumentIngestionService.class);
 
     private final VectorStore vectorStore;
+    private final VectorStoreConfig vectorStoreConfig;
 
     @Value("${credit-risk.chunking.chunk-size:800}")
     private int chunkSize;
@@ -49,8 +51,9 @@ public class DocumentIngestionService {
 
     private boolean ingested = false;
 
-    public DocumentIngestionService(VectorStore vectorStore) {
+    public DocumentIngestionService(VectorStore vectorStore, VectorStoreConfig vectorStoreConfig) {
         this.vectorStore = vectorStore;
+        this.vectorStoreConfig = vectorStoreConfig;
     }
 
     /**
@@ -129,7 +132,7 @@ public class DocumentIngestionService {
 
         // To respect Gemini Free Tier rate limits (15 RPM), we process in small batches
         // with delays
-        int batchSize = 2; // Process 2 chunks per batch
+        int batchSize = 5; // Nomic AI has much higher rate limits than Gemini free tier
         for (int i = 0; i < chunks.size(); i += batchSize) {
             int end = Math.min(chunks.size(), i + batchSize);
             List<Document> batch = chunks.subList(i, end);
@@ -151,6 +154,9 @@ public class DocumentIngestionService {
 
         ingested = true;
         log.info("=== ✅ Document Ingestion Complete: {} chunks embedded and stored ===", chunks.size());
+
+        // 💾 Save immediately so vectors persist even before app shuts down
+        vectorStoreConfig.saveToDisk("post-ingestion");
     }
 
     public boolean isIngested() {
